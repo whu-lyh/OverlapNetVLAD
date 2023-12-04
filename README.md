@@ -61,14 +61,16 @@ the function **evaluate_vlad** is the evaluation of the coarse seaching method u
 ## 4. practical test
 
 ### 1. train
-+ it seems that there are server overfit during training.
-[./docs/imgs/](20231201-215957_recall.jpg)
++ it seems that there are server over-fitting during training.
+
+![](./docs/imgs/20231201-215957_recall.jpg)
+
 + the training process is slow.
 
 ### 2. evaluate
-the recall at sequence 07 is about 57.76%
-|sequence|07|00|06|10|
-|recall|0.57763975|0.77908218|0.98905109|0.41463415|
+| sequence | 07         | 00         | 06         | 00         |
+| -------- | ---------- | ---------- | ---------- | ---------- |
+| recall@1 | 0.57763975 | 0.77908218 | 0.98905109 | 0.41463415 |
 
 ## Acknowledgement
 
