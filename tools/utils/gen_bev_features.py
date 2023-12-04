@@ -1,9 +1,11 @@
-import yaml
-from tqdm import tqdm
-import torch
-import numpy as np
 import os
 import sys
+
+import numpy as np
+import torch
+import yaml
+from tqdm import tqdm
+
 p = os.path.dirname(
     os.path.dirname(
         os.path.dirname(
@@ -57,7 +59,7 @@ def extract_kitti(net, scan_folder, dst_folder, batch_num=1):
 if __name__ == "__main__":
     config_file = os.path.join(p, './config/config.yml')
     config = yaml.safe_load(open(config_file))
-
+    spconv_ver = config["env"]["spconv_ver"]
     root = config["data_root"]["data_root_folder"]
     ckpt = config["extractor_config"]["pretrained_backbone_model"]
     seqs = config["extractor_config"]["seqs"]
@@ -66,12 +68,19 @@ if __name__ == "__main__":
     ckpt = os.path.join(p, ckpt)
     net = backbone(32).to(device)
     checkpoint = torch.load(ckpt)
-    net.load_state_dict(checkpoint['state_dict'])
+    model_dict = checkpoint['state_dict']
+    if spconv_ver == 2:
+        for k, v in model_dict.items():
+            # 1.x checkpoint weight migrate to 2.x
+            if k == 'dconv_down1.conv.3.weight' or k == 'dconv_down1_1.conv.3.weight' \
+                or k== 'dconv_down2.conv.3.weight' or k == 'dconv_down2_1.conv.3.weight':
+                model_dict[k] = v.permute(3, 0, 1, 2).contiguous()
+    net.load_state_dict(model_dict)
 
     for seq in seqs:
-        scan_folder = os.path.join(root, seq, "velodyne")
-        dst_folder = os.path.join(root, seq, "BEV_FEA")
-
+        scan_folder = os.path.join(root, 'sequences', seq, "velodyne")
+        dst_folder = os.path.join(root, 'sequences', seq, "BEV_FEA")
+        print("dst_folder: ", dst_folder)
         if not os.path.exists(dst_folder):
             os.mkdir(dst_folder)
 

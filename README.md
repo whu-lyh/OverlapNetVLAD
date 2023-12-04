@@ -17,23 +17,32 @@ Pretrained models in [here](https://drive.google.com/drive/folders/1LEGhH38SB9Y7
 
 ### Requirments
 
-We use *spconv-cu102=2.1.25*, other version may report error. 
-
-The rest requirments are comman and easy to handle.
-
 ```shell
 conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=10.2 -c pytorch
 pip install spconv-cu102==2.1.25
-pip install pyymal tqdm open3d tensorboardX
+pip install pyymal tqdm open3d tensorboard
 ```
+> or directly run the install.sh scripts
 
-## Extract features
+We use *spconv-cu102=2.1.25*, other version may report error. 
+`spconv-cu116` occors with following errors.
+
+```
+RuntimeError: Error(s) in loading state_dict for backbone:
+size mismatch for dconv_down1.conv.3.weight: copying a param with shape torch.Size([11, 11, 16, 16]) from checkpoint, the shape in current model is torch.Size([16, 11, 11, 16]).
+size mismatch for dconv_down1_1.conv.3.weight: copying a param with shape torch.Size([11, 11, 16, 16]) from checkpoint, the shape in current model is torch.Size([16, 11, 11, 16]).
+size mismatch for dconv_down2.conv.3.weight: copying a param with shape torch.Size([7, 7, 32, 32]) from checkpoint, the shape in current model is torch.Size([32, 7, 7, 32]).
+size mismatch for dconv_down2_1.conv.3.weight: copying a param with shape torch.Size([7, 7, 32, 32]) from checkpoint, the shape in current model is torch.Size([32, 7, 7, 32]).
+```
+And you should permute the mismatch tensor by following this [tips](https://github.com/traveller59/spconv/issues/605#issuecomment-1678641998)
+
+## 1. Extract features
 
 ```shell
 python tools/utils/gen_bev_features.py
 ```
 
-## Train
+## 2. Train
 
 The training of backbone network and overlap estimation network please refs to [BEVNet](https://github.com/lilin-hitcrt/BEVNet). Here is the training of global descriptor generation network.
 
@@ -41,13 +50,25 @@ The training of backbone network and overlap estimation network please refs to [
 python train/train_netvlad.py
 ```
 
-## Evalute
+## 3. Evalute
 
 ```shell
 python evaluate/evaluate.py
 ```
 
 the function **evaluate_vlad** is the evaluation of the coarse seaching method using global descriptors.
+
+## 4. practical test
+
+### 1. train
++ it seems that there are server overfit during training.
+[./docs/imgs/](20231201-215957_recall.jpg)
++ the training process is slow.
+
+### 2. evaluate
+the recall at sequence 07 is about 57.76%
+|sequence|07|00|06|10|
+|recall|0.57763975|0.77908218|0.98905109|0.41463415|
 
 ## Acknowledgement
 

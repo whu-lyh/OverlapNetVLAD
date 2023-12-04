@@ -1,24 +1,25 @@
-from tqdm import tqdm
-from torch.utils.data import DataLoader
-import torch.nn as nn
-import torch
-from tensorboardX import SummaryWriter
-from sklearn import metrics
-import numpy as np
-import yaml
-import time
 import os
 import random
 import sys
+import time
+
+import numpy as np
+import torch
+import torch.nn as nn
+import yaml
+from sklearn import metrics
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+
 p = os.path.dirname(os.path.dirname((os.path.abspath(__file__))))
 if p not in sys.path:
     sys.path.append(p)
 
-from tools.database import kitti_dataset
+from evaluate import evaluate
 from modules.loss import quadruplet_loss
 from modules.overlapnetvlad import vlad_head
-from evaluate import evaluate
-
+from tools.database import kitti_dataset
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 randg = np.random.RandomState()
@@ -46,7 +47,7 @@ def train(config):
         neg_threshold=neg_threshold)
     train_loader = DataLoader(
         dataset=train_dataset, batch_size=batch_size,
-        shuffle=True, num_workers=1)
+        shuffle=True, num_workers=16, pin_memory=True, persistent_workers=True,)
     vlad = vlad_head().to(device=device)
     optimizer = torch.optim.Adam(
         filter(lambda p: p.requires_grad, vlad.parameters()),
@@ -65,8 +66,7 @@ def train(config):
     batch_num = 0
     for i in range(epoch):
         vlad.train()
-        for i_batch, sample_batch in tqdm(enumerate(train_loader), total=len(
-                train_loader), desc='Train epoch ' + str(i), leave=False):
+        for i_batch, sample_batch in tqdm(enumerate(train_loader), total=len(train_loader), desc='Train epoch ' + str(i), leave=False):
             optimizer.zero_grad()
             input = torch.cat([sample_batch['query_desc'],
                                sample_batch['pos_desc'],
@@ -74,20 +74,17 @@ def train(config):
                                sample_batch['other_desc']], dim=0).to(device)
             out = vlad(input)
             split_size = input.shape[0] // 4
-            query_fea, pos_fea, neg_fea, other_fea = torch.split(
-                out, split_size, dim=0)
+            query_fea, pos_fea, neg_fea, other_fea = torch.split(out, split_size, dim=0)
             train_dataset.update_latent_vectors(
                 query_fea.detach().cpu().numpy(),
                 sample_batch['id'].detach().cpu().numpy())
 
-            pos_dis, neg_dis, other_dis, loss = loss_function(
-                query_fea, pos_fea, neg_fea, other_fea, 0.5, 0.2)
+            pos_dis, neg_dis, other_dis, loss = loss_function(query_fea, pos_fea, neg_fea, other_fea, 0.5, 0.2)
 
             loss.backward()
             optimizer.step()
             with torch.no_grad():
-                writer.add_scalar(
-                    'loss', loss.cpu().item(), global_step=batch_num)
+                writer.add_scalar('loss', loss.cpu().item(), global_step=batch_num)
                 writer.add_scalar(
                     'LR',
                     optimizer.state_dict()['param_groups'][0]['lr'],

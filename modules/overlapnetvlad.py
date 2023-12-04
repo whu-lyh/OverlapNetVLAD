@@ -107,21 +107,13 @@ class FeatureFuse(torch.nn.Module):
 class backbone(torch.nn.Module):
     def __init__(self, inchannels=64) -> None:
         super(backbone, self).__init__()
-        self.dconv_down1 = BottleneckSparse2D(inchannels, inchannels * 2, 11)
-        self.dconv_down1_1 = BottleneckSparse2D(inchannels * 2, inchannels * 2,
-                                                11)
-        self.dconv_down2 = BottleneckSparse2D(inchannels * 2, inchannels * 4,
-                                              7)
-        self.dconv_down2_1 = BottleneckSparse2D(inchannels * 4, inchannels * 4,
-                                                7)
-        self.dconv_down3 = BottleneckSparse2D(inchannels * 4, inchannels * 8,
-                                              5)
-        self.dconv_down3_1 = BottleneckSparse2D(inchannels * 8, inchannels * 8,
-                                                5)
-        self.dconv_down4 = spconv.SubMConv2d(inchannels * 8,
-                                             inchannels * 16,
-                                             3,
-                                             bias=True)
+        self.dconv_down1 = BottleneckSparse2D(inchannels, inchannels * 2, 11) # by default, 64*128*11
+        self.dconv_down1_1 = BottleneckSparse2D(inchannels * 2, inchannels * 2, 11) # by default, 128*128*11
+        self.dconv_down2 = BottleneckSparse2D(inchannels * 2, inchannels * 4, 7) # by default, 128*256*7
+        self.dconv_down2_1 = BottleneckSparse2D(inchannels * 4, inchannels * 4, 7) # by default, 256*256*7
+        self.dconv_down3 = BottleneckSparse2D(inchannels * 4, inchannels * 8, 5) # by default, 256*512*5
+        self.dconv_down3_1 = BottleneckSparse2D(inchannels * 8, inchannels * 8, 5) # by default, 512*512*5
+        self.dconv_down4 = spconv.SubMConv2d(inchannels * 8, inchannels * 16, 3, bias=True) # by default, 512*1024*3
         self.maxpool1 = spconv.SparseMaxPool2d(3, 2, 1, indice_key='up1')
         self.maxpool2 = spconv.SparseMaxPool2d(3, 2, 1, indice_key='up2')
         self.maxpool3 = spconv.SparseMaxPool2d(3, 2, 1, indice_key='up3')

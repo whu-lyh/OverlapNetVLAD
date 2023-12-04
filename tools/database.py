@@ -15,8 +15,8 @@ class kitti_dataset(Dataset):
         self.seqs = seqs
         self.poses = []
         for seq in seqs:
-            pose = np.genfromtxt(os.path.join(root.replace(
-                'sequences', 'poses_semantic'), seq + '.txt'))[:, [3, 11]]
+            pose_path = os.path.join(root, 'sequences', str(seq), 'poses.txt')
+            pose = np.genfromtxt(pose_path)[:, [3, 11]]
             self.poses.append(pose)
         self.pairs = {}
 
@@ -115,7 +115,7 @@ class kitti_dataset(Dataset):
         query = self.pairs[idx]
         seq = self.seqs[query["query_seq"]]
         id = str(query["query_id"]).zfill(6)
-        file = os.path.join(self.root, seq, "BEV_FEA", id + '.npy')
+        file = os.path.join(self.root, 'sequences', seq, "BEV_FEA", id + '.npy')
 
         return np.load(file)
 

@@ -64,11 +64,11 @@ def evaluate_vlad(vlad, topk=1):
     batch_num = config["test_config"]["batch_num"]
 
     vlad.eval()
-    fea_folder = os.path.join(root, seq, "BEV_FEA")
+    fea_folder = os.path.join(root, 'sequences', seq, "BEV_FEA")
     vlad_arr = generate_descriptors(vlad, fea_folder, batch_num)
 
-    pose = np.genfromtxt(os.path.join(root.replace(
-        'sequences', 'poses_semantic'), seq + '.txt'))[:, [3, 11]]
+    pose_path = os.path.join(root, 'sequences', str(seq), 'poses.txt')
+    pose = np.genfromtxt(pose_path)[:, [3, 11]]
     length = len(pose)
 
     correct_at_k = np.zeros(topk)
@@ -114,14 +114,14 @@ def evaluate_overlapnetvlad(vlad, overlapnetvlad, topk=25, topn=1):
     batch_num = config["test_config"]["batch_num"]
 
     vlad.eval()
-    fea_folder = os.path.join(root, seq, "BEV_FEA")
+    fea_folder = os.path.join(root, 'sequences', seq, "BEV_FEA")
     vlad_arr = generate_descriptors(vlad, fea_folder, batch_num)
 
     feature_files = sorted(os.listdir(fea_folder))
     feature_files = [os.path.join(fea_folder, v) for v in feature_files]
 
-    pose = np.genfromtxt(os.path.join(root.replace(
-        'sequences', 'poses_semantic'), seq + '.txt'))[:, [3, 11]]
+    pose_path = os.path.join(root, 'sequences', str(seq), 'poses.txt')
+    pose = np.genfromtxt(pose_path)[:, [3, 11]]
     length = len(pose)
 
     correct_at_n = np.zeros(topn)
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     overlap = overlap_head(32).to(device)
     checkpoint = torch.load(os.path.join(p, "./models/overlap.ckpt"))
     overlap.load_state_dict(checkpoint['state_dict'])
-
+    # current recall@1 is printed
     print(
         "recall@N\n",
         evaluate_overlapnetvlad(
